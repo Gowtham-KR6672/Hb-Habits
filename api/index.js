@@ -14,9 +14,13 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+if (!process.env.MONGO_URI) {
+  console.error('CRITICAL ERROR: MONGO_URI environment variable is missing!');
+} else {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
+}
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
@@ -60,6 +64,30 @@ const userSchema = new mongoose.Schema({
   weekStartsOn: { type: String, default: 'Monday' }
 });
 const User = mongoose.model('User', userSchema);
+
+const habitSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  name: { type: String, required: true },
+  category: { type: String, required: true },
+  type: { type: String, required: true }, // 'Quantity', 'Timer', 'Distance', 'Binary'
+  frequency: { type: String, default: 'Daily' },
+  targetValue: { type: Number, default: 1 },
+  reminderTime: { type: String, default: '' },
+  description: { type: String, default: '' },
+  timezone: { type: String, default: '' },
+  source: { type: String, enum: ['template', 'custom'], default: 'template' },
+  createdAt: { type: Date, default: Date.now }
+});
+const Habit = mongoose.model('Habit', habitSchema);
+
+const habitLogSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  habitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Habit', required: true },
+  date: { type: String, required: true }, // 'YYYY-MM-DD'
+  status: { type: String, required: true }, // 'completed', 'partial', 'incomplete'
+  value: { type: Number, default: null } // For quantity/distance tracking
+});
+const HabitLog = mongoose.model('HabitLog', habitLogSchema);
 
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
@@ -122,7 +150,7 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, email: user.email });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Database/Server Error: ' + (error.message || 'Unknown') });
   }
 });
 
@@ -306,6 +334,120 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Profile Update Error:', error);
     res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+// 10. GET HABITS & LOGS
+app.get('/api/habits', authMiddleware, async (req, res) => {
+  try {
+    const habits = await Habit.find({ userId: req.user.userId }).lean();
+    const habitLogs = await HabitLog.find({ userId: req.user.userId }).lean();
+    
+    // Convert _id to id for frontend compatibility
+    const formattedHabits = habits.map(h => ({ ...h, id: h._id.toString() }));
+    const formattedLogs = habitLogs.map(l => ({ ...l, id: l._id.toString(), habitId: l.habitId.toString() }));
+    
+    res.json({ habits: formattedHabits, habitLogs: formattedLogs });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error fetching habits' });
+  }
+});
+
+// 11. CREATE HABIT
+app.post('/api/habits', authMiddleware, async (req, res) => {
+  try {
+    const {
+      name,
+      category = 'Fitness',
+      type = 'Binary',
+      frequency = 'Daily',
+      targetValue = 1,
+      reminderTime = '',
+      description = '',
+      timezone = '',
+      source = 'template'
+    } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Habit name is required' });
+    }
+
+    const numericTarget = Number(targetValue);
+    const habit = new Habit({
+      userId: req.user.userId,
+      name: name.trim(),
+      category,
+      type,
+      frequency,
+      targetValue: Number.isFinite(numericTarget) && numericTarget > 0 ? numericTarget : 1,
+      reminderTime,
+      description,
+      timezone,
+      source: source === 'custom' ? 'custom' : 'template'
+    });
+
+    await habit.save();
+    const formatted = { ...habit.toObject(), id: habit._id.toString() };
+    res.status(201).json(formatted);
+  } catch (error) {
+    console.error('Create Habit Error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create habit' });
+  }
+});
+
+// 12. UPDATE HABIT
+app.put('/api/habits/:id', authMiddleware, async (req, res) => {
+  try {
+    const habit = await Habit.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { $set: req.body },
+      { new: true }
+    );
+    if (!habit) return res.status(404).json({ error: 'Habit not found' });
+    res.json({ ...habit.toObject(), id: habit._id.toString() });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update habit' });
+  }
+});
+
+// 13. DELETE HABIT
+app.delete('/api/habits/:id', authMiddleware, async (req, res) => {
+  try {
+    const habit = await Habit.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
+    if (!habit) return res.status(404).json({ error: 'Habit not found' });
+    
+    // Delete associated logs
+    await HabitLog.deleteMany({ habitId: req.params.id, userId: req.user.userId });
+    
+    res.json({ message: 'Habit deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete habit' });
+  }
+});
+
+// 14. LOG HABIT
+app.post('/api/logs', authMiddleware, async (req, res) => {
+  const { habitId, date, status, value } = req.body;
+  try {
+    let log = await HabitLog.findOne({ habitId, date, userId: req.user.userId });
+    if (log) {
+      log.status = status;
+      log.value = value !== undefined ? value : log.value;
+      await log.save();
+    } else {
+      log = new HabitLog({
+        userId: req.user.userId,
+        habitId,
+        date,
+        status,
+        value
+      });
+      await log.save();
+    }
+    const formatted = { ...log.toObject(), id: log._id.toString(), habitId: log.habitId.toString() };
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to log habit' });
   }
 });
 

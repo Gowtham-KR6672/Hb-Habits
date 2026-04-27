@@ -1,41 +1,104 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const HabitContext = createContext();
 
 export function HabitProvider({ children }) {
-  const [habits, setHabits] = useState(() => {
-    const saved = localStorage.getItem('habits');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [habitLogs, setHabitsLogs] = useState(() => {
-    const saved = localStorage.getItem('habitLogs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [habits, setHabits] = useState([]);
+  const [habitLogs, setHabitsLogs] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('habits', JSON.stringify(habits));
-  }, [habits]);
+    const fetchHabits = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('/api/habits', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setHabits(data.habits);
+          setHabitsLogs(data.habitLogs);
+        }
+      } catch (err) {
+        console.error('Failed to fetch habits', err);
+      }
+    };
+    fetchHabits();
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('habitLogs', JSON.stringify(habitLogs));
-  }, [habitLogs]);
+  const addHabit = async (habit) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('/api/habits', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(habit)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create habit');
+      }
 
-  const addHabit = (habit) => {
-    setHabits(prev => [...prev, { ...habit, id: crypto.randomUUID(), createdAt: new Date().toISOString() }]);
+      setHabits(prev => [...prev, data]);
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   };
 
-  const updateHabit = (id, updates) => {
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
+  const updateHabit = async (id, updates) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/habits/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update habit');
+      }
+
+      setHabits(prev => prev.map(h => h.id === id ? data : h));
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   };
 
-  const deleteHabit = (id) => {
-    setHabits(prev => prev.filter(h => h.id !== id));
-    setHabitsLogs(prev => prev.filter(l => l.habitId !== id)); // Cascading delete
+  const deleteHabit = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/habits/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete habit');
+      }
+
+      setHabits(prev => prev.filter(h => h.id !== id));
+      setHabitsLogs(prev => prev.filter(l => l.habitId !== id));
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   };
 
-  const logHabit = (habitId, dateStr, status, value = null) => {
-    // dateStr in YYYY-MM-DD
+  const logHabit = async (habitId, dateStr, status, value = null) => {
+    const token = localStorage.getItem('token');
+    
+    // Optimistic UI Update
     setHabitsLogs(prev => {
       const existingIdx = prev.findIndex(l => l.habitId === habitId && l.date === dateStr);
       if (existingIdx >= 0) {
@@ -43,8 +106,33 @@ export function HabitProvider({ children }) {
         newLogs[existingIdx] = { ...newLogs[existingIdx], status, value };
         return newLogs;
       }
-      return [...prev, { habitId, date: dateStr, status, value }];
+      return [...prev, { habitId, date: dateStr, status, value, id: 'temp-id' }];
     });
+
+    try {
+      const res = await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ habitId, date: dateStr, status, value })
+      });
+      if (res.ok) {
+        const newLog = await res.json();
+        setHabitsLogs(prev => {
+          const existingIdx = prev.findIndex(l => l.habitId === habitId && l.date === dateStr);
+          if (existingIdx >= 0) {
+            const newLogs = [...prev];
+            newLogs[existingIdx] = newLog;
+            return newLogs;
+          }
+          return prev;
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getLog = (habitId, dateStr) => {
