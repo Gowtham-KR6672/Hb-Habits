@@ -1,7 +1,17 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
 import { useHabits } from '../context/HabitContext';
-import { format, subDays, startOfWeek, addDays } from 'date-fns';
+import { format, subDays, startOfWeek, addDays, parseISO } from 'date-fns';
+import L from 'leaflet';
+
+// Fix Leaflet's default icon path issues in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 const getGoalUnit = (type) => {
   if (type === 'Timer') return 'Mins';
@@ -223,13 +233,18 @@ function TargetVsAchieved3DChart({ data, targetValue, goalUnit }) {
 export default function HabitDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { habits, habitLogs } = useHabits();
+  const { habits, habitLogs, logHabit } = useHabits();
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
   const habit = habits.find(h => h.id === id);
 
   const logsForHabit = useMemo(() => {
     return habitLogs.filter(l => l.habitId === id);
   }, [habitLogs, id]);
+
+  const logsWithRoutes = useMemo(() => {
+    return logsForHabit.filter(l => l.route && l.route.length > 0).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [logsForHabit]);
 
   const { currentStreak, bestStreak } = useMemo(() => {
     const sortedLogs = [...logsForHabit].filter(l => l.status === 'completed').sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -334,21 +349,57 @@ export default function HabitDetails() {
               </div>
             </div>
           </div>
-          <div className="mt-8 flex gap-4 w-full">
-            <div className="flex-1 glass-card p-4 rounded-xl border border-white/5 text-center">
-              <span className="font-label-caps text-label-caps text-on-surface-variant block mb-1">Current Streak</span>
-              <div className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-                <span className="font-headline-lg text-headline-lg text-tertiary">{currentStreak}</span>
+          <div className="mt-8 flex flex-col gap-3 w-full">
+            <div className="flex gap-4">
+              <div className="flex-1 glass-card p-4 rounded-xl border border-white/5 text-center">
+                <span className="font-label-caps text-label-caps text-on-surface-variant block mb-1">Current Streak</span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                  <span className="font-headline-lg text-headline-lg text-tertiary">{currentStreak}</span>
+                </div>
+              </div>
+              <div className="flex-1 glass-card p-4 rounded-xl border border-white/5 text-center">
+                <span className="font-label-caps text-label-caps text-on-surface-variant block mb-1">Best Streak</span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-primary">stars</span>
+                  <span className="font-headline-lg text-headline-lg text-primary">{bestStreak}</span>
+                </div>
               </div>
             </div>
-            <div className="flex-1 glass-card p-4 rounded-xl border border-white/5 text-center">
-              <span className="font-label-caps text-label-caps text-on-surface-variant block mb-1">Best Streak</span>
-              <div className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-primary">stars</span>
-                <span className="font-headline-lg text-headline-lg text-primary">{bestStreak}</span>
+
+            {habit.type === 'Distance' && (
+              <div className="flex gap-3 mt-2">
+                <button 
+                  onClick={() => navigate(`/track/${habit.id}`)}
+                  className="flex-1 bg-secondary text-on-secondary-container font-headline-lg py-4 rounded-2xl shadow-[0_10px_25px_rgba(78,222,163,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group text-sm"
+                >
+                  <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">explore</span>
+                  Start Tracking
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    if (progressPercent >= 100) {
+                      logHabit(habit.id, todayStr, 'incomplete', 0);
+                    } else {
+                      logHabit(habit.id, todayStr, 'completed', habit.targetValue);
+                    }
+                  }}
+                  className={`flex-1 py-4 rounded-2xl font-headline-lg flex items-center justify-center gap-2 transition-all text-sm ${
+                    progressPercent >= 100 
+                      ? 'bg-secondary/10 border border-secondary/20 text-secondary' 
+                      : 'bg-white/5 border border-white/10 text-on-surface hover:bg-white/10 active:scale-[0.98]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {progressPercent >= 100 ? 'undo' : 'check_circle'}
+                  </span>
+                  <span className="truncate">
+                    {progressPercent >= 100 ? 'Unmark Complete' : 'Mark Complete'}
+                  </span>
+                </button>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -380,6 +431,42 @@ export default function HabitDetails() {
           </div>
         </section>
 
+        {habit.type === 'Distance' && habit.category === 'Outdoor' && (
+          <section className="space-y-4">
+            <h3 className="font-headline-lg text-headline-lg text-on-surface">Map History</h3>
+            {logsWithRoutes.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3">
+                {logsWithRoutes.map((log) => (
+                  <div 
+                    key={log.id} 
+                    className="glass-card p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-secondary/5 hover:border-secondary/20 transition-all cursor-pointer group"
+                    onClick={() => setSelectedRoute(log)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
+                        <span className="material-symbols-outlined text-2xl">map</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-on-surface group-hover:text-secondary transition-colors">{format(parseISO(log.date), 'MMMM d, yyyy')}</p>
+                        <p className="text-sm text-on-surface-variant">{log.value?.toFixed(2)} km Activity</p>
+                      </div>
+                    </div>
+                    <span className="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors">chevron_right</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card p-8 rounded-2xl border border-white/5 border-dashed flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-on-surface/5 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-on-surface-variant text-3xl">route</span>
+                </div>
+                <p className="text-on-surface font-bold">No GPS activities yet</p>
+                <p className="text-sm text-on-surface-variant mt-1">Start a GPS session to see your route history here.</p>
+              </div>
+            )}
+          </section>
+        )}
+
         <section className="space-y-4">
           <h3 className="font-headline-lg text-headline-lg text-on-surface">Insight</h3>
           <div className="glass-card p-6 rounded-2xl border border-white/5 flex gap-4 bg-gradient-to-br from-surface-container-high/40 to-transparent">
@@ -388,7 +475,10 @@ export default function HabitDetails() {
             </div>
             <div className="space-y-2 flex-1">
               <p className="text-body-md text-on-surface leading-relaxed">
-                You're building great momentum! Keep hitting your targets to improve your weekly completion rate.
+                {habit.type === 'Distance' 
+                  ? "Track your outdoor sessions using GPS to see your routes and improve your pace."
+                  : "You're building great momentum! Keep hitting your targets to improve your weekly completion rate."
+                }
               </p>
               
               {habit.type === 'Distance' && (
@@ -404,6 +494,52 @@ export default function HabitDetails() {
           </div>
         </section>
       </main>
+
+      {/* Map Modal */}
+      {selectedRoute && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-10" onClick={() => setSelectedRoute(null)}>
+          <div className="w-full max-w-4xl bg-surface rounded-[32px] overflow-hidden border border-white/10 shadow-2xl flex flex-col h-[80vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">{format(parseISO(selectedRoute.date), 'MMMM d, yyyy')}</h2>
+                <p className="text-sm text-on-surface-variant">{selectedRoute.value?.toFixed(2)} km Activity</p>
+              </div>
+              <button 
+                onClick={() => setSelectedRoute(null)}
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="flex-1 relative bg-surface-container">
+              <MapContainer 
+                center={selectedRoute.route[0]} 
+                zoom={15} 
+                className="w-full h-full"
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                />
+                <Polyline positions={selectedRoute.route} color="#4edea3" weight={5} opacity={0.8} />
+                <Marker position={selectedRoute.route[0]} />
+                <Marker position={selectedRoute.route[selectedRoute.route.length - 1]} />
+              </MapContainer>
+            </div>
+            
+            <div className="p-6 bg-surface-variant/20 flex justify-center">
+              <button 
+                onClick={() => setSelectedRoute(null)}
+                className="px-8 py-3 rounded-xl bg-secondary text-on-secondary-container font-bold"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

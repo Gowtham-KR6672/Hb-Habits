@@ -6,17 +6,25 @@ const habitTemplates = {
   Health: [
     { name: 'Drink Water', icon: 'water_drop', type: 'Quantity', targetValue: 8, unit: 'TIMES', description: 'Stay hydrated through the day.' },
     { name: 'Take Medicine', icon: 'medication', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Keep your daily health routine steady.' },
-    { name: 'Sleep Before 10 PM', icon: 'bedtime', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Build a calmer sleep schedule.' },
+    { name: 'Eat Fruit', icon: 'nutrition', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Get your daily dose of vitamins.' },
+    { name: 'Limit Coffee', icon: 'coffee', type: 'Quantity', targetValue: 2, unit: 'TIMES', description: 'Monitor your caffeine intake.' },
+    { name: 'Skincare', icon: 'face', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Maintain your morning/night routine.' },
+    { name: 'Sleep 8 Hours', icon: 'bedtime', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Prioritize restorative sleep.' },
     { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
   ],
   Fitness: [
     { name: 'Push Ups', icon: 'fitness_center', type: 'Quantity', targetValue: 20, unit: 'TIMES', description: 'Build strength one set at a time.' },
     { name: 'Workout', icon: 'exercise', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Move your body with a focused session.' },
-    { name: 'Stretching', icon: 'self_improvement', type: 'Timer', targetValue: 10, unit: 'MINS', description: 'Loosen up and recover better.' },
+    { name: 'Yoga', icon: 'self_improvement', type: 'Timer', targetValue: 20, unit: 'MINS', description: 'Improve flexibility and mindfulness.' },
+    { name: 'Plank', icon: 'timer', type: 'Timer', targetValue: 2, unit: 'MINS', description: 'Build core stability.' },
+    { name: 'Jump Rope', icon: 'reorder', type: 'Quantity', targetValue: 100, unit: 'TIMES', description: 'Quick cardio blast.' },
+    { name: 'Stretching', icon: 'accessibility_new', type: 'Timer', targetValue: 10, unit: 'MINS', description: 'Loosen up and recover better.' },
     { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
   ],
   Study: [
     { name: 'Read Book', icon: 'menu_book', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Make reading a daily rhythm.' },
+    { name: 'Practice Coding', icon: 'code', type: 'Timer', targetValue: 60, unit: 'MINS', description: 'Build your technical skills.' },
+    { name: 'Learn Language', icon: 'language', type: 'Timer', targetValue: 20, unit: 'MINS', description: 'Practice a new language daily.' },
     { name: 'Practice Problems', icon: 'edit_note', type: 'Quantity', targetValue: 10, unit: 'TIMES', description: 'Sharpen skills with repeat practice.' },
     { name: 'Revise Notes', icon: 'school', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Review what matters before it fades.' },
     { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
@@ -25,12 +33,31 @@ const habitTemplates = {
     { name: 'Walk', icon: 'directions_walk', type: 'Distance', targetValue: 2, unit: 'KM', description: 'Get fresh air and steady movement.' },
     { name: 'Run', icon: 'directions_run', type: 'Distance', targetValue: 3, unit: 'KM', description: 'Train your pace and endurance.' },
     { name: 'Cycling', icon: 'directions_bike', type: 'Distance', targetValue: 5, unit: 'KM', description: 'Ride toward better stamina.' },
+    { name: 'Hiking', icon: 'terrain', type: 'Distance', targetValue: 5, unit: 'KM', description: 'Explore trails and nature.' },
+    { name: 'Gardening', icon: 'yard', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Connect with nature at home.' },
     { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
   ],
   Indoor: [
     { name: 'Clean Room', icon: 'cleaning_services', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Keep your space lighter and clearer.' },
     { name: 'Meditation', icon: 'spa', type: 'Timer', targetValue: 10, unit: 'MINS', description: 'Give your mind a quiet reset.' },
+    { name: 'Journaling', icon: 'edit', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Reflect on your day.' },
+    { name: 'Play Instrument', icon: 'music_note', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Build your musical skills.' },
     { name: 'No Screen Break', icon: 'phonelink_erase', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Protect your attention from drift.' },
+    { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
+  ],
+  'Indoor Games': [
+    { name: 'Chess', icon: 'person_raised_hand', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Strategic mind exercise.' },
+    { name: 'Table Tennis', icon: 'sports_tennis', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Fast-paced indoor fun.' },
+    { name: 'Carrom', icon: 'adjust', type: 'Binary', targetValue: 1, unit: 'TIMES', description: 'Classic indoor board game.' },
+    { name: 'Billiards', icon: 'circle', type: 'Timer', targetValue: 45, unit: 'MINS', description: 'Focus and precision play.' },
+    { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
+  ],
+  'Outdoor Games': [
+    { name: 'Cricket', icon: 'sports_cricket', type: 'Timer', targetValue: 60, unit: 'MINS', description: 'Classic outdoor team sport.' },
+    { name: 'Football', icon: 'sports_soccer', type: 'Timer', targetValue: 45, unit: 'MINS', description: 'Cardio and team strategy.' },
+    { name: 'Badminton', icon: 'sports_tennis', type: 'Timer', targetValue: 30, unit: 'MINS', description: 'Quick reflexes and movement.' },
+    { name: 'Basketball', icon: 'sports_basketball', type: 'Timer', targetValue: 40, unit: 'MINS', description: 'High-energy hoop play.' },
+    { name: 'Tennis', icon: 'sports_tennis', type: 'Timer', targetValue: 60, unit: 'MINS', description: 'Agility and stamina on court.' },
     { name: 'Other', icon: 'add_circle', type: 'Binary', targetValue: 1, unit: 'TIMES', description: '' }
   ]
 };
@@ -47,6 +74,7 @@ export default function CreateHabit() {
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Fitness');
+  const [subCategory, setSubCategory] = useState('');
   const [type, setType] = useState('Binary');
   const [frequency, setFrequency] = useState('Daily');
   const [targetValue, setTargetValue] = useState(1);
@@ -62,16 +90,19 @@ export default function CreateHabit() {
     { name: 'Fitness', icon: 'fitness_center' },
     { name: 'Study', icon: 'school' },
     { name: 'Outdoor', icon: 'directions_run' },
-    { name: 'Indoor', icon: 'home' }
+    { name: 'Indoor', icon: 'home' },
+    { name: 'Games', icon: 'sports_esports' }
   ];
 
   const types = ['Binary', 'Quantity', 'Timer', 'Distance'];
   const frequencies = ['Daily', 'Weekly', 'Monthly'];
-  const templates = habitTemplates[category] || [];
+  const activeCategory = category === 'Games' ? subCategory : category;
+  const templates = habitTemplates[activeCategory] || [];
   const isOtherTemplate = selectedTemplate === 'Other';
 
   const handleCategorySelect = (nextCategory) => {
     setCategory(nextCategory);
+    setSubCategory(nextCategory === 'Games' ? 'Indoor Games' : '');
     setSelectedTemplate('');
     setName('');
     setDescription('');
@@ -153,8 +184,30 @@ export default function CreateHabit() {
             </div>
           </div>
 
+          {category === 'Games' && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
+              <label className="font-label-caps text-label-caps text-on-primary-container ml-1 uppercase">Game Type</label>
+              <div className="glass-card rounded-2xl p-2 border border-white/5 grid grid-cols-2 gap-1">
+                {['Indoor Games', 'Outdoor Games'].map(sub => (
+                  <button 
+                    key={sub}
+                    type="button"
+                    onClick={() => {
+                      setSubCategory(sub);
+                      setSelectedTemplate('');
+                      setName('');
+                    }}
+                    className={`py-3 rounded-xl font-label-caps text-[10px] uppercase tracking-widest transition-colors ${subCategory === sub ? 'bg-white/10 text-on-surface active-ring' : 'text-on-surface-variant hover:bg-white/5'}`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
-            <label className="font-label-caps text-label-caps text-on-primary-container ml-1 uppercase">{category} Templates</label>
+            <label className="font-label-caps text-label-caps text-on-primary-container ml-1 uppercase">{activeCategory} Templates</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {templates.map(template => (
                 <button

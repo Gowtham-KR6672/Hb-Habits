@@ -32,11 +32,11 @@ const MetricDelta = ({ value, suffix = '' }) => {
 };
 
 export default function Analytics() {
-  const { habits, habitLogs } = useHabits();
+  const { habits, habitLogs, selectedDate } = useHabits();
   const [timeframe, setTimeframe] = useState('Week');
 
   const stats = useMemo(() => {
-    const today = startOfDay(new Date());
+    const today = startOfDay(selectedDate);
     const config = TIMEFRAMES[timeframe];
 
     const currentEnd = today;
@@ -137,9 +137,10 @@ export default function Analytics() {
   }, [habits, habitLogs, timeframe]);
 
   const ringsData = useMemo(() => {
-    const categories = ['Health', 'Fitness', 'Study', 'Outdoor', 'Indoor'];
+    // Dynamically get categories that have at least one habit assigned
+    const activeCategories = Array.from(new Set(habits.map(h => h.category)));
     
-    return categories.map(cat => {
+    return activeCategories.map(cat => {
       const habitsInCat = stats.habitBreakdown.filter(h => h.category === cat);
       const totalSessionsPossible = habitsInCat.length * stats.configDays;
       const actualSessions = habitsInCat.reduce((sum, h) => sum + h.current, 0);
@@ -150,7 +151,7 @@ export default function Analytics() {
 
       return { label: cat, progress };
     });
-  }, [stats]);
+  }, [stats, habits]);
 
   return (
     <>

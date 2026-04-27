@@ -5,6 +5,7 @@ const HabitContext = createContext();
 export function HabitProvider({ children }) {
   const [habits, setHabits] = useState([]);
   const [habitLogs, setHabitsLogs] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     const fetchHabits = async () => {
@@ -95,7 +96,7 @@ export function HabitProvider({ children }) {
     }
   };
 
-  const logHabit = async (habitId, dateStr, status, value = null) => {
+  const logHabit = async (habitId, dateStr, status, value = null, route = []) => {
     const token = localStorage.getItem('token');
     
     // Optimistic UI Update
@@ -103,12 +104,12 @@ export function HabitProvider({ children }) {
       const existingIdx = prev.findIndex(l => l.habitId === habitId && l.date === dateStr);
       if (existingIdx >= 0) {
         const newLogs = [...prev];
-        newLogs[existingIdx] = { ...newLogs[existingIdx], status, value };
+        newLogs[existingIdx] = { ...newLogs[existingIdx], status, value, route };
         return newLogs;
       }
-      return [...prev, { habitId, date: dateStr, status, value, id: 'temp-id' }];
+      return [...prev, { habitId, date: dateStr, status, value, route, id: 'temp-id' }];
     });
-
+    
     try {
       const res = await fetch('/api/logs', {
         method: 'POST',
@@ -116,7 +117,7 @@ export function HabitProvider({ children }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ habitId, date: dateStr, status, value })
+        body: JSON.stringify({ habitId, date: dateStr, status, value, route })
       });
       if (res.ok) {
         const newLog = await res.json();
@@ -140,7 +141,17 @@ export function HabitProvider({ children }) {
   };
 
   return (
-    <HabitContext.Provider value={{ habits, habitLogs, addHabit, updateHabit, deleteHabit, logHabit, getLog }}>
+    <HabitContext.Provider value={{ 
+      habits, 
+      habitLogs, 
+      selectedDate, 
+      setSelectedDate, 
+      addHabit, 
+      updateHabit, 
+      deleteHabit, 
+      logHabit, 
+      getLog 
+    }}>
       {children}
     </HabitContext.Provider>
   );

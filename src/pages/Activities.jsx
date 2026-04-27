@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopAppBar from '../components/layout/TopAppBar';
 import { useHabits } from '../context/HabitContext';
 
-const categories = ['Health', 'Fitness', 'Study', 'Outdoor', 'Indoor'];
+const categories = ['Health', 'Fitness', 'Study', 'Outdoor', 'Indoor', 'Indoor Games', 'Outdoor Games'];
 const types = ['Binary', 'Quantity', 'Timer', 'Distance'];
 const frequencies = ['Daily', 'Weekly', 'Monthly'];
 
@@ -17,6 +17,7 @@ const getHabitIcon = (habit, activeTab) => {
   if (habit.type === 'Distance') return 'directions_run';
   if (habit.type === 'Timer') return 'timer';
   if (habit.type === 'Quantity') return 'tag';
+  if (habit.category === 'Indoor Games' || habit.category === 'Outdoor Games') return 'sports_esports';
   return activeTab === 'Indoor' ? 'home' : 'park';
 };
 
@@ -36,8 +37,12 @@ export default function Activities() {
   const touchStart = useRef(null);
   const didSwipe = useRef(false);
 
-  const indoorActivities = habits.filter(h => h.category === 'Indoor' || h.category === 'Health' || h.category === 'Study');
-  const outdoorActivities = habits.filter(h => h.category === 'Outdoor' || h.category === 'Fitness');
+  const indoorActivities = habits.filter(h => 
+    ['Indoor', 'Health', 'Study', 'Indoor Games', 'Games'].includes(h.category)
+  );
+  const outdoorActivities = habits.filter(h => 
+    ['Outdoor', 'Fitness', 'Outdoor Games'].includes(h.category)
+  );
   const displayHabits = activeTab === 'Indoor' ? indoorActivities : outdoorActivities;
 
   useEffect(() => {

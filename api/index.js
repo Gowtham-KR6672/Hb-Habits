@@ -85,7 +85,8 @@ const habitLogSchema = new mongoose.Schema({
   habitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Habit', required: true },
   date: { type: String, required: true }, // 'YYYY-MM-DD'
   status: { type: String, required: true }, // 'completed', 'partial', 'incomplete'
-  value: { type: Number, default: null } // For quantity/distance tracking
+  value: { type: Number, default: null }, // For quantity/distance tracking
+  route: { type: [[Number]], default: [] } // Array of [lat, lng] coordinates
 });
 const HabitLog = mongoose.model('HabitLog', habitLogSchema);
 
@@ -427,12 +428,13 @@ app.delete('/api/habits/:id', authMiddleware, async (req, res) => {
 
 // 14. LOG HABIT
 app.post('/api/logs', authMiddleware, async (req, res) => {
-  const { habitId, date, status, value } = req.body;
+  const { habitId, date, status, value, route } = req.body;
   try {
     let log = await HabitLog.findOne({ habitId, date, userId: req.user.userId });
     if (log) {
       log.status = status;
       log.value = value !== undefined ? value : log.value;
+      if (route) log.route = route;
       await log.save();
     } else {
       log = new HabitLog({
@@ -440,7 +442,8 @@ app.post('/api/logs', authMiddleware, async (req, res) => {
         habitId,
         date,
         status,
-        value
+        value,
+        route: route || []
       });
       await log.save();
     }

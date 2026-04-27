@@ -114,18 +114,9 @@ export default function ActivityTracker() {
   const finishActivity = () => {
     pauseTracking();
     if (distance > 0 && habit) {
-      // Log the distance achieved today
       const dateStr = format(new Date(), 'yyyy-MM-dd');
-      // Status is completed if distance >= targetValue, else partial (but our system currently uses 'completed')
-      const status = distance >= habit.targetValue ? 'completed' : 'partial'; // you can adapt this
-      // The current HabitContext logHabit function takes (habitId, dateStr, status). 
-      // It doesn't currently store numeric values for distance, but we log it as completed if it meets the goal.
-      if (distance >= habit.targetValue) {
-        logHabit(habit.id, dateStr, 'completed');
-      } else {
-        // Optional: you could implement partial logging if your context supported it
-        logHabit(habit.id, dateStr, 'completed'); // Force complete for demo purposes if they finished
-      }
+      const status = distance >= habit.targetValue ? 'completed' : 'partial';
+      logHabit(habit.id, dateStr, status, distance, positions);
     }
     navigate(`/habit/${id}`);
   };

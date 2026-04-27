@@ -111,10 +111,10 @@
 
 @layer components {
   .glass-card {
-    background: rgba(var(--color-on-surface) / 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(var(--color-on-surface) / 0.08);
+    background: rgba(var(--color-on-surface) / 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(var(--color-on-surface) / 0.15);
   }
   
   .active-ring {
@@ -127,16 +127,59 @@
 }
 
 @layer utilities {
+  .water-fill {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgb(var(--color-secondary) / 0.1);
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgb(var(--color-on-surface) / 0.1);
+    box-shadow: inset 0 0 20px rgb(var(--color-secondary) / 0.2);
+  }
+
+  .water-wave {
+    position: absolute;
+    width: 400%;
+    height: 120%;
+    background: linear-gradient(to bottom, rgb(var(--color-secondary) / 0.8), rgb(var(--color-secondary) / 0.95));
+    left: 0;
+    transition: top 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 10px 20px rgb(255 255 255 / 0.1);
+  }
+
+  .water-wave::before,
+  .water-wave::after {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 200' preserveAspectRatio='none'%3E%3Cpath d='M0,100 C200,100 400,0 800,0 C1200,0 1400,100 1600,100 L1600,200 L0,200 Z' fill='%234edea3'/%3E%3C/svg%3E");
+    background-size: 25% 100%;
+    animation: waves-move 2.5s linear infinite;
+    opacity: 0.6;
+  }
+
+  .water-wave::after {
+    top: -12px;
+    opacity: 0.3;
+    animation: waves-move 4s linear infinite reverse;
+    filter: brightness(1.1);
+  }
+
+  @keyframes waves-move {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
   @keyframes drawLine {
-    to {
-      stroke-dashoffset: 0;
-    }
+    to { stroke-dashoffset: 0; }
   }
 
   @keyframes fadeIn {
-    to {
-      opacity: 1;
-    }
+    to { opacity: 1; }
   }
 
   .hide-scrollbar::-webkit-scrollbar {

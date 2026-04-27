@@ -22,17 +22,18 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export const applyTheme = (themeValue) => {
-  const theme = themeValue || localStorage.getItem('theme') || 'Dark';
+  const theme = themeValue || localStorage.getItem('theme') || 'System';
   if (theme === 'Light') {
     document.documentElement.classList.remove('dark');
-  } else if (theme === 'System') {
+  } else if (theme === 'Dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    // System
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  } else {
-    document.documentElement.classList.add('dark');
   }
 };
 
