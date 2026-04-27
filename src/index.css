@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-tertiary: 255 185 95;
+    --color-surface-container-low: 241 245 249;
+    --color-on-surface-variant: 71 85 105;
+    --color-secondary: 78 222 163;
+    --color-error-container: 147 0 10;
+    --color-secondary-fixed-dim: 78 222 163;
+    --color-primary-container: 219 234 254;
+    --color-on-primary-container: 30 58 138;
+    --color-on-secondary-container: 6 78 59;
+    --color-on-secondary-fixed: 0 33 19;
+    --color-surface-tint: 190 198 224;
+    --color-on-primary-fixed-variant: 63 70 92;
+    --color-tertiary-container: 254 243 199;
+    --color-on-secondary-fixed-variant: 0 82 54;
+    --color-on-error-container: 255 218 214;
+    --color-tertiary-fixed-dim: 255 185 95;
+    --color-on-surface: 15 23 42;
+    --color-on-secondary: 0 56 36;
+    --color-primary-fixed: 218 226 253;
+    --color-surface-container-lowest: 255 255 255;
+    --color-background: 248 250 252;
+    --color-inverse-on-surface: 248 250 252;
+    --color-on-tertiary-container: 120 53 15;
+    --color-surface: 255 255 255;
+    --color-surface-bright: 248 250 252;
+    --color-on-background: 15 23 42;
+    --color-outline-variant: 203 213 225;
+    --color-on-primary: 40 48 68;
+    --color-surface-container-high: 203 213 225;
+    --color-primary-fixed-dim: 190 198 224;
+    --color-inverse-primary: 86 94 116;
+    --color-surface-dim: 226 232 240;
+    --color-on-error: 105 0 5;
+    --color-inverse-surface: 15 23 42;
+    --color-outline: 148 163 184;
+    --color-on-tertiary: 71 42 0;
+    --color-on-tertiary-fixed: 42 23 0;
+    --color-secondary-container: 209 250 229;
+    --color-surface-container: 226 232 240;
+    --color-surface-container-highest: 148 163 184;
+    --color-error: 255 180 171;
+    --color-primary: 190 198 224;
+    --color-secondary-fixed: 111 251 190;
+    --color-on-tertiary-fixed-variant: 101 62 0;
+    --color-surface-variant: 226 232 240;
+    --color-on-primary-fixed: 19 27 46;
+    --color-tertiary-fixed: 255 221 184;
+  }
+
+  .dark {
+    --color-tertiary: 255 185 95;
+    --color-surface-container-low: 13 28 45;
+    --color-on-surface-variant: 198 198 205;
+    --color-secondary: 78 222 163;
+    --color-error-container: 147 0 10;
+    --color-secondary-fixed-dim: 78 222 163;
+    --color-primary-container: 15 23 42;
+    --color-on-primary-container: 121 128 152;
+    --color-on-secondary-container: 0 49 31;
+    --color-on-secondary-fixed: 0 33 19;
+    --color-surface-tint: 190 198 224;
+    --color-on-primary-fixed-variant: 63 70 92;
+    --color-tertiary-container: 37 20 0;
+    --color-on-secondary-fixed-variant: 0 82 54;
+    --color-on-error-container: 255 218 214;
+    --color-tertiary-fixed-dim: 255 185 95;
+    --color-on-surface: 212 228 250;
+    --color-on-secondary: 0 56 36;
+    --color-primary-fixed: 218 226 253;
+    --color-surface-container-lowest: 1 15 31;
+    --color-background: 5 20 36;
+    --color-inverse-on-surface: 35 49 67;
+    --color-on-tertiary-container: 180 115 0;
+    --color-surface: 5 20 36;
+    --color-surface-bright: 44 58 76;
+    --color-on-background: 212 228 250;
+    --color-outline-variant: 69 70 77;
+    --color-on-primary: 40 48 68;
+    --color-surface-container-high: 28 43 60;
+    --color-primary-fixed-dim: 190 198 224;
+    --color-inverse-primary: 86 94 116;
+    --color-surface-dim: 5 20 36;
+    --color-on-error: 105 0 5;
+    --color-inverse-surface: 212 228 250;
+    --color-outline: 144 144 151;
+    --color-on-tertiary: 71 42 0;
+    --color-on-tertiary-fixed: 42 23 0;
+    --color-secondary-container: 0 165 114;
+    --color-surface-container: 18 33 49;
+    --color-surface-container-highest: 39 54 71;
+    --color-error: 255 180 171;
+    --color-primary: 190 198 224;
+    --color-secondary-fixed: 111 251 190;
+    --color-on-tertiary-fixed-variant: 101 62 0;
+    --color-surface-variant: 39 54 71;
+    --color-on-primary-fixed: 19 27 46;
+    --color-tertiary-fixed: 255 221 184;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-body-md min-h-screen pb-32;
+    min-height: max(884px, 100dvh);
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(var(--color-on-surface) / 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(var(--color-on-surface) / 0.08);
+  }
+  
+  .active-ring {
+    box-shadow: inset 0 0 0 1px #4edea3;
+  }
+  
+  .inner-glow {
+    box-shadow: inset 0 1px 1px 0 rgba(78, 222, 163, 0.1);
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+}
